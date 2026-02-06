@@ -1,0 +1,26 @@
+flowchart TD
+    A[Start]
+
+    %% Packing Department
+    subgraph Packing_Department
+        A --> B[Stage Items with Shipment Type]
+        B --> C[Add Edit or Delete Items]
+        C --> D{Move Items to Stage}
+        D -->|Yes| B
+        D -->|No Ready for Planning| E[Send Items to Planning]
+    end
+
+    %% Planning Department
+    subgraph Planning_Department
+        E --> F[Approve Staged Items]
+        F --> G{Assign Items to Pallets}
+        G -->|No| F
+        G -->|Yes| H[Select Filled Pallets for Shipment]
+    end
+
+    %% Shipment Creation
+    H --> I[Group Pallets into Shipment]
+    I --> J[Enter or Confirm Sender and Receiver Details]
+    J --> K[Load Address from Address Book]
+    K --> L[Generate Packing Slip and Invoice]
+    L --> M[End]

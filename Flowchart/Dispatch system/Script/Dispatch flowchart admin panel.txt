@@ -1,0 +1,25 @@
+flowchart TD
+    A[Start Admin logs into Admin Panel]
+
+    A --> B{What to configure}
+
+    %% Shipment Type Configuration
+    B -->|Shipment Type Template and Field Configuration| C[Manage Shipment Types]
+    C --> D[Create or Select a Shipment Type]
+    D --> E[Upload and Associate Excel Template]
+    E --> F[Define Dynamic Fields for JSON Data Structure]
+    F --> G[System Validates Template Placeholders]
+    G --> H{Template Valid}
+
+    H -->|No Mismatched Fields Found| E
+    H -->|Yes Success| I{Configure Another Type}
+    I -->|Yes| D
+    I -->|No| Z[End]
+
+    %% Address Management
+    B -->|Manage Address| J[Address Book Management]
+    J --> K[Add or Edit Address in Address Book]
+    K --> L{Configure Another Address}
+    L -->|Yes| K
+    L -->|No| M[Set System Default Address Consignee Buyer etc]
+    M --> Z

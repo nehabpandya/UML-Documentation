@@ -1,0 +1,138 @@
+erDiagram
+    USERS {
+        int UserID PK
+        varchar Name
+        int RoleID FK
+    }
+
+    ROLES {
+        int RoleID PK
+        varchar RoleName "Admin, Planner, Packer"
+    }
+
+    BOX_TYPES {
+        int BoxTypeID PK
+        varchar BoxName
+        decimal EmptyBoxWeight
+        boolean IsActive
+    }
+
+    PALLET_TYPES {
+        int PalletTypeID PK
+        varchar PalletName
+        decimal EmptyPalletWeight
+        boolean IsActive
+    }
+
+    SHIPMENT_TYPES {
+        int ShipmentTypeID PK
+        varchar TypeName
+        varchar TemplatePath
+        int DefaultConsigneeAddressID FK "(Nullable)"
+        int DefaultBuyerAddressID FK "(Nullable)"
+        int DefaultManufacturerAddressID FK "(Nullable)"
+        json DynamicFieldsSchema
+    }
+
+
+
+    STAGED_ITEMS {
+        int ItemID PK
+        int ShipmentTypeID FK
+        int BoxTypeID FK
+        int StagedByID FK
+        int VerifiedByID FK
+        varchar PartNo 
+        varchar PoNo
+        varchar LineNo
+        varchar JobNo
+        varchar Material 
+        varchar MaterialGrade 
+        boolean LM
+        decimal PerPartWeight
+        decimal EachBoxWeight
+        decimal TotalWeight
+        int PartsPerBox "Number of individual parts in one box"
+        int TotalPartQty
+        int BoxQty "Total boxes for this line item (e.g., 10)"
+        int RemainingBoxQty "How many boxes are still available to be palletized"
+        varchar Status "e.g., Awaiting Palletizing, Partially Palletized, Fully Palletized"
+        boolean IsVerified
+       
+        datetime VerifyTimestamp
+        datetime StagedByTimestamp
+        int SendToVerfyby
+        boolean SendToVerfied
+        datetime SendToVerfiedTimestamp
+        int SessionID FK "(Nullable) Links to a packing session"
+
+    }
+
+    PALLETS {
+        int PalletID PK
+        int PalletTypeID FK
+        int ShipmentID FK
+        varchar PalletNumber
+    }
+
+    %% This table now has a composite primary key
+    PALLET_CONTENTS {
+        int ItemID PK "FK to STAGED_ITEMS"
+        int PalletID PK "FK to PALLETS"
+        int AssignedBoxQty
+    } 
+    
+ %% --- NEW TABLE TO MANAGE PACKING WORK ---
+    PACKING_SESSIONS {
+        int SessionID PK
+        int UserID FK "Planner who owns this session"
+        datetime CreationTimestamp
+        varchar Status "In Progress, Completed, Cancelled"
+    }
+    SHIPMENTS {
+        int ShipmentID PK
+        %% --- NEW FIELDS FOR INVOICE & PACKSLIP ---
+        varchar InvoiceNo "Final formatted string, e.g., EXP-392/2024-25"
+        varchar PackSlipNo "Final formatted string, e.g., 4779/2024"
+        int InvoiceSequence "The raw number (392)"
+        int PackslipSequence "The raw number (4779)"
+        varchar FinancialYear "e.g., 2024-25"
+        %% --- Other Fields ---
+        datetime ShipmentDate
+        int ConsigneeAddressID FK "(Nullable)"
+        int BuyerAddressID FK "(Nullable)"
+        int ManufacturerAddressID FK "(Nullable)"
+        json DynamicData
+        varchar Status
+    }
+      ADDRESSES {
+        int AddressID PK
+        varchar CompanyName
+        varchar Street
+        varchar District
+        varchar City
+        varchar Country
+        varchar PostalCode
+    }
+     %% --- NEW TABLE FOR MANAGING SEQUENCES ---
+    SEQUENCE_COUNTERS {
+        varchar SequenceName PK "e.g., INVOICE_FY_2024-25"
+        int LastValue "The last number that was used"
+    }
+    %% --- Defining the relationships ---
+    USERS ||--o{ ROLES : "has role"
+    USERS ||--o{ STAGED_ITEMS : "stages"
+    USERS ||--o{ STAGED_ITEMS : "verifies"
+    BOX_TYPES ||--o{ STAGED_ITEMS : "is type for"
+    PALLET_TYPES ||--o{ PALLETS : "is type for"
+    SHIPMENT_TYPES ||--o{ STAGED_ITEMS : "defines"
+    SHIPMENTS ||--o{ PALLETS : "groups"
+    STAGED_ITEMS }o--o{ PALLET_CONTENTS : "is placed on"
+    PALLETS }o--o{ PALLET_CONTENTS : "contains"
+     %% --- NEW RELATIONSHIPS FOR ADDRESSES ---
+    ADDRESSES ||--o{ SHIPMENTS : "is consignee for"
+    ADDRESSES ||--o{ SHIPMENTS : "is buyer for"
+    ADDRESSES ||--o{ SHIPMENTS : "is manufacturer for"
+    ADDRESSES ||--o{ SHIPMENT_TYPES : "is default consignee for"
+    ADDRESSES ||--o{ SHIPMENT_TYPES : "is default buyer for"
+    ADDRESSES ||--o{ SHIPMENT_TYPES : "is default manufacturer for"
